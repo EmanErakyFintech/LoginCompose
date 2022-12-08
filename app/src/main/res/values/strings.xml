@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">LoginCompose</string>
+    <string name="title_activity_second">SecondActivity</string>
+    <string name="identity">رقم الهوية</string>
+    <string name="password">كلمة المرور</string>
+    <string name="login">تسجيل الدخول</string>
 </resources>

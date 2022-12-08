@@ -1,11 +1,11 @@
-package com.example.logincompose
+package com.example.logincompose.presentation.ui.main
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -14,36 +14,30 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.logincompose.ui.theme.LoginComposeTheme
-
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            LoginComposeTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colors.background
-                ) {
-                    LoginUser()
-                }
-            }
-        }
-    }
-}
+import androidx.lifecycle.viewmodel.compose.viewModel
+import org.koin.androidx.compose.viewModel
+import com.example.logincompose.R
+import com.example.logincompose.presentation.ui.SecondActivity
+import org.koin.androidx.compose.getViewModel
 
 @Composable
-fun LoginUser() {
+fun LoginForm(
+    loginViewModel: MainViewModel = getViewModel()
+){
+    val mContext = LocalContext.current
     val textValue = remember { mutableStateOf("") }
     val textPass = remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -61,13 +55,13 @@ fun LoginUser() {
         )
 
 
-        TextString(txt = "رقم الهوية")
+        TextString(txt = stringResource(id = R.string.identity))
 
-        TxtField(textValue , "رقم الهوية")
+        TxtField(textValue, stringResource(id = R.string.identity), KeyboardType.Number,loginViewModel,mContext)
 
-        TextString(txt = "كلمة المرور")
+        TextString(txt = stringResource(id = R.string.password))
 
-        TxtField(textPass , "كلمة المرور")
+        TxtField(textPass, stringResource(id = R.string.password), KeyboardType.Password,loginViewModel,mContext)
 
 
         Column(
@@ -76,7 +70,11 @@ fun LoginUser() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Button(
-                onClick = { println("Call Login ${textPass.value} ${textValue.value}") }, colors = ButtonDefaults.buttonColors(
+                onClick = {
+                        loginViewModel.onEvent(mContext,UIEventLogin.Submit)
+                    println("Call Login pass=${textPass.value} identity =${textValue.value}")
+                },
+                colors = ButtonDefaults.buttonColors(
                     backgroundColor = Color.Blue
                 ), modifier = Modifier
                     .padding(top = 25.dp)
@@ -84,17 +82,19 @@ fun LoginUser() {
                     .width(160.dp)
             ) {
                 Text(
-                    text = "تسجيل الدخول",
+                    text = stringResource(id = R.string.login),
                     color = colorResource(id = R.color.white)
                 )
             }
         }
 
     }
+
+
 }
 
 @Composable
-fun TextString(txt:String){
+fun TextString(txt: String) {
     Text(
         text = txt, style = TextStyle(
             color = Color.Black,
@@ -106,43 +106,37 @@ fun TextString(txt:String){
 }
 
 @Composable
-fun TxtField(textState: MutableState<String>, txtValue: String) {
+fun TxtField(textState: MutableState<String>, txtValue: String, key: KeyboardType, loginViewModel: MainViewModel ,context: Context) {
 
     val textValue = remember { textState }
-    TextField(textStyle = TextStyle(
-        color = Color.Black,
-        textAlign = TextAlign.End
-    ),
+    TextField(
+        textStyle = TextStyle(
+            color = Color.Black,
+            textAlign = TextAlign.End
+        ),
         colors = TextFieldDefaults.textFieldColors(
             cursorColor = Color.Black,
-            disabledLabelColor =  Color(0xffd8e6ff),
+            disabledLabelColor = Color(0xffd8e6ff),
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent
         ),
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
-//        label={ Text(text = txtValue, textAlign = TextAlign.End,style =TextStyle(textAlign = TextAlign.End))},
         placeholder = {
-            Text(txtValue, textAlign = TextAlign.Left,
-                style =TextStyle(textAlign = TextAlign.Left)
+            Text(
+                txtValue, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End,
             )
         },
-
-
 
         value = textValue.value,
         onValueChange = { it ->
             textValue.value = it
-        })
+            if(txtValue.equals(context.resources.getString(R.string.identity)))
+            loginViewModel.onEvent(context,UIEventLogin.IdentityChange(it))
+            else
+                loginViewModel.onEvent(context,UIEventLogin.PasswordChange(it))
+        },
 
-
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    LoginComposeTheme {
-        LoginUser()
-    }
+        keyboardOptions = KeyboardOptions(keyboardType = key)
+    )
 }
